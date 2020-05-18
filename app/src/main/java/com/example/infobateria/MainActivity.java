@@ -24,6 +24,11 @@ public class MainActivity extends AppCompatActivity {
     private TextView napiecie;
     private ProgressBar progressBar;
 
+    private BroadcastReceiver mBatInfoReveiver;
+    private IntentFilter filter;
+
+    private boolean onPause = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,23 +46,43 @@ public class MainActivity extends AppCompatActivity {
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setMax(100);
 
+        mBatInfoReveiver = mBatInfoReveiver();
+        filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        registerReceiver(mBatInfoReveiver, filter);
+
+        onPause = true;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (onPause) {
+            unregisterReceiver(mBatInfoReveiver);
+            onPause = false;
+        }
+    }
+
+    private BroadcastReceiver mBatInfoReveiver() {
         BroadcastReceiver mBatInfoReveiver = new BroadcastReceiver() {
             public void onReceive(Context context, Intent intent) {
-                progressBar.setProgress(intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1));
-                poziomNaladowania.setText("Level: " +intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1));
+                progressBar.setProgress(intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0));
+                poziomNaladowania.setText("Level: " +intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0));
                 stan.setText("Stan: " +intent.getIntExtra(BatteryManager.EXTRA_HEALTH, -1));
-                zrodloZasilania.setText("Źródło zasilania: " +intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1));
-                dostepna.setText("Dostępna?: " +intent.getIntExtra(BatteryManager.EXTRA_PRESENT, -1));
-                poziom.setText("Poziom: " +intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1));
+                zrodloZasilania.setText("Źródło zasilania: " +intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0));
+                dostepna.setText("Dostępna?: " +intent.getExtras().getBoolean(BatteryManager.EXTRA_PRESENT));
+                poziom.setText("Poziom: " +intent.getIntExtra(BatteryManager.EXTRA_SCALE, 1));
                 stan2.setText("Stan: " +intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1));
-                technologia.setText("Technologia: " +intent.getIntExtra(BatteryManager.EXTRA_TECHNOLOGY, -1));
-                temperatura.setText("Temperatura: " +intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1));
-                napiecie.setText("Napięcie: " +intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1));
+                technologia.setText("Technologia: " +intent.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY));
+                temperatura.setText("Temperatura: " +intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) / 10);
+                napiecie.setText("Napięcie: " +intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0) / 1000);
             }
         };
-
-        registerReceiver(mBatInfoReveiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-
+        return mBatInfoReveiver;
     }
 
 }
